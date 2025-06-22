@@ -18,6 +18,7 @@ import { EditPlaylistDialog } from "@/components/playlist/edit-playlist-dialog"
 import { DeletePlaylistDialog } from "@/components/playlist/delete-playlist-dialog"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
 import { cn } from "@/lib/utils"
+import { Dialog, DialogTrigger } from "@/components/ui/dialog"
 
 interface PlaylistTrack extends Track {}
 
@@ -60,6 +61,7 @@ export default function PlaylistPage({ params }: PlaylistPageProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   const { currentTrack, isPlaying, playTrack, togglePlayPause } = useAudio()
 
@@ -312,10 +314,19 @@ export default function PlaylistPage({ params }: PlaylistPageProps) {
 
                 {isOwner && (
                   <div className="flex items-center gap-2">
-                    <EditPlaylistDialog
-                      playlist={playlist}
-                      onUpdate={fetchPlaylistData}
-                    />
+                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <EditPlaylistDialog
+                        playlist={playlist}
+                        onUpdate={fetchPlaylistData}
+                        open={isEditDialogOpen}
+                        onOpenChange={setIsEditDialogOpen}
+                      />
+                    </Dialog>
                     <DeletePlaylistDialog
                       playlistId={playlist.id}
                       playlistName={playlist.name}

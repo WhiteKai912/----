@@ -80,6 +80,8 @@ export interface Playlist {
   created_at: string
   updated_at: string
   cover_url?: string | null
+  cover_data?: Buffer | null
+  cover_version?: string | null
   tracks?: Track[]
 }
 
@@ -306,6 +308,8 @@ export async function getUserPlaylists(
           u.name as user_name,
           p.is_public,
           p.cover_url,
+          p.cover_data,
+          p.cover_version,
           p.created_at,
           p.updated_at,
           COUNT(pt.track_id) as tracks_count,
@@ -343,8 +347,15 @@ export async function getUserPlaylists(
           [playlist.id]
         )
 
+        // Динамически формируем cover_url, если его нет, но есть cover_data
+        let final_cover_url = playlist.cover_url
+        if (!final_cover_url && playlist.cover_data && playlist.cover_version) {
+          final_cover_url = `/api/playlists/${playlist.id}/cover?v=${playlist.cover_version}`
+        }
+
         return {
           ...playlist,
+          cover_url: final_cover_url,
           tracks: tracksResult.rows
         }
       })
@@ -380,6 +391,8 @@ export async function getPublicPlaylists(
           u.name as user_name,
           p.is_public,
           p.cover_url,
+          p.cover_data,
+          p.cover_version,
           p.created_at,
           p.updated_at,
           COUNT(pt.track_id) as tracks_count,
@@ -398,7 +411,7 @@ export async function getPublicPlaylists(
       client.query("SELECT COUNT(*) as total FROM playlists WHERE is_public = true"),
     ])
 
-    // Для каждого плейлиста получаем первые 4 трека
+    // Для каждого плейлиста получаем первые 4 трека для отображения в качестве обложки-коллажа
     const playlistsWithTracks = await Promise.all(
       playlistsResult.rows.map(async (playlist) => {
         const tracksResult = await client.query(
@@ -417,9 +430,19 @@ export async function getPublicPlaylists(
           [playlist.id]
         )
 
+        const tracks = tracksResult.rows
+        const coverUrls = tracks.map(t => t.cover_url).filter(Boolean).slice(0, 4)
+        
+        // Динамически генерируем URL обложки самого плейлиста
+        let playlist_cover_url = playlist.cover_url
+        if (!playlist_cover_url && playlist.cover_data && playlist.cover_version) {
+          playlist_cover_url = `/api/playlists/${playlist.id}/cover?v=${playlist.cover_version}`
+        }
+
         return {
           ...playlist,
-          tracks: tracksResult.rows
+          cover_url: playlist_cover_url,
+          tracks: tracksResult.rows, // Возвращаем полный массив треков
         }
       })
     )
@@ -448,7 +471,18 @@ export async function getPlaylistById(id: string): Promise<Playlist | null> {
        GROUP BY p.id, u.name`,
       [id]
     )
-    return result.rows[0] || null
+    const playlist = result.rows[0]
+    if (!playlist) return null
+
+    // Динамически формируем cover_url
+    let cover_url = null
+    if (playlist.cover_data && playlist.cover_version) {
+      cover_url = `/api/playlists/${playlist.id}/cover?v=${playlist.cover_version}`
+    }
+    return {
+      ...playlist,
+      cover_url,
+    }
   } finally {
     client.release()
   }
@@ -1205,6 +1239,8 @@ export async function searchPlaylists(query: string): Promise<Playlist[]> {
         u.name as user_name,
         p.is_public,
         p.cover_url,
+        p.cover_data,
+        p.cover_version,
         p.created_at,
         p.updated_at,
         COUNT(pt.track_id) as tracks_count,
@@ -1452,6 +1488,8 @@ export async function getFeaturedPlaylists(limit = 8): Promise<Playlist[]> {
         u.name as user_name,
         p.is_public,
         p.cover_url,
+        p.cover_data,
+        p.cover_version,
         p.created_at,
         p.updated_at,
         COUNT(pt.track_id) as tracks_count,
@@ -1467,7 +1505,7 @@ export async function getFeaturedPlaylists(limit = 8): Promise<Playlist[]> {
       LEFT JOIN playlist_tracks pt ON p.id = pt.playlist_id
       LEFT JOIN tracks t ON pt.track_id = t.id AND t.is_active = true
       WHERE p.is_public = true
-      GROUP BY p.id, u.name, p.cover_url
+      GROUP BY p.id, u.name
       ORDER BY p.updated_at DESC
       LIMIT $1
     `, [limit])

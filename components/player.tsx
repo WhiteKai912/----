@@ -46,6 +46,7 @@ export function Player() {
     toggleRepeat,
     toggleShuffle,
   } = useAudio()
+  const [showQueue, setShowQueue] = useState(false)
 
   // Проверяем, находится ли трек в избранном
   useEffect(() => {
@@ -237,7 +238,15 @@ export function Player() {
             >
               <Heart className={`w-4 h-4 ${isInFavorites ? "fill-current" : ""}`} />
             </Button>
-            <QueueSheet />
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setShowQueue(true)}
+              className="text-gray-500 dark:text-gray-400"
+            >
+              <List className="w-5 h-5" />
+            </Button>
+            <QueueSheet open={showQueue} onOpenChange={setShowQueue} />
           </div>
         </div>
       </div>

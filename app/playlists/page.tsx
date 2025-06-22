@@ -38,6 +38,7 @@ import { PlaylistDeleteModal } from "@/components/playlist-delete-modal"
 import { Player } from "@/components/player"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { PlaylistCover } from "@/components/playlist-cover"
+import { EditPlaylistDialog } from "@/components/playlist/edit-playlist-dialog"
 
 export default function PlaylistsPage() {
   const { data: session, status } = useSession()
@@ -461,10 +462,19 @@ export default function PlaylistsPage() {
 
       {/* Modals */}
       {editingPlaylist && (
-        <PlaylistEditModal
+        <EditPlaylistDialog
           playlist={editingPlaylist}
-          onClose={() => setEditingPlaylist(null)}
-          onUpdate={handleUpdatePlaylist}
+          open={!!editingPlaylist}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              setEditingPlaylist(null)
+              fetchPlaylists()
+            }
+          }}
+          onUpdate={(updatedPlaylist) => {
+            handleUpdatePlaylist(updatedPlaylist)
+            setEditingPlaylist(null)
+          }}
         />
       )}
 
@@ -475,6 +485,8 @@ export default function PlaylistsPage() {
           onDelete={handleDeletePlaylist}
         />
       )}
+
+      <Player />
     </>
   )
 }

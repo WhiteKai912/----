@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,15 +18,31 @@ import { motion, AnimatePresence } from "framer-motion"
 interface UploadCoverDialogProps {
   playlistId: string
   onUpload: (coverUrl: string) => void
+  coverUrl?: string | null
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function UploadCoverDialog({ playlistId, onUpload }: UploadCoverDialogProps) {
-  const [isOpen, setIsOpen] = useState(false)
+export function UploadCoverDialog({ playlistId, onUpload, coverUrl, open, onOpenChange }: UploadCoverDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isOpen = open !== undefined ? open : internalOpen
+  const handleDialogOpenChange = onOpenChange ? onOpenChange : setInternalOpen
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState("")
   const [dragOver, setDragOver] = useState(false)
+
+  useEffect(() => {
+    if (isOpen && !selectedFile && coverUrl) {
+      setPreviewUrl(coverUrl)
+    }
+    if (!isOpen) {
+      setSelectedFile(null)
+      setPreviewUrl(null)
+      setError("")
+    }
+  }, [isOpen, coverUrl, selectedFile])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -71,6 +87,7 @@ export function UploadCoverDialog({ playlistId, onUpload }: UploadCoverDialogPro
     setError("")
 
     try {
+      console.log('Попытка загрузки файла:', selectedFile)
       const formData = new FormData()
       formData.append("file", selectedFile)
 
@@ -86,7 +103,7 @@ export function UploadCoverDialog({ playlistId, onUpload }: UploadCoverDialogPro
 
       const data = await response.json()
       onUpload(data.cover_url)
-      setIsOpen(false)
+      setInternalOpen(false)
     } catch (error) {
       console.error("Error uploading cover:", error)
       setError(error instanceof Error ? error.message : "Ошибка при загрузке обложки")
@@ -96,17 +113,18 @@ export function UploadCoverDialog({ playlistId, onUpload }: UploadCoverDialogPro
   }
 
   const handleClose = () => {
-    setIsOpen(false)
+    setInternalOpen(false)
     setSelectedFile(null)
     setPreviewUrl(null)
     setError("")
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>
         <motion.div whileTap={{ scale: 0.95 }}>
           <Button
+            type="button"
             variant="outline"
             size="icon"
             className="active:scale-95 transition-transform"
@@ -213,13 +231,14 @@ export function UploadCoverDialog({ playlistId, onUpload }: UploadCoverDialogPro
         <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4 mt-6">
           <Button
             variant="outline"
-            onClick={handleClose}
+            onClick={() => handleDialogOpenChange(false)}
             disabled={uploading}
             className="w-full sm:w-auto active:scale-95 transition-transform"
           >
             Отмена
           </Button>
           <Button
+            type="button"
             onClick={handleUpload}
             disabled={!selectedFile || uploading}
             className="w-full sm:w-auto bg-cyan-500 hover:bg-cyan-600 text-white active:scale-95 transition-transform"

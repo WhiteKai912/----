@@ -27,7 +27,7 @@ export default function NotFound() {
                 <span className="zero-with-logo mx-2">
                   <span className="zero-outline"></span>
                   <span className="logo-anim">
-                    <Music className="w-8 h-8 text-white" />
+                  <Music className="w-8 h-8 text-white" />
                   </span>
                 </span>
                 4

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -14,10 +14,12 @@ import { UploadCoverDialog } from "./upload-cover-dialog"
 interface EditPlaylistDialogProps {
   playlist: Playlist
   onUpdate: (playlist: Playlist) => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-export function EditPlaylistDialog({ playlist, onUpdate }: EditPlaylistDialogProps) {
-  const [open, setOpen] = useState(false)
+export function EditPlaylistDialog({ playlist, onUpdate, open, onOpenChange }: EditPlaylistDialogProps) {
+  const [coverDialogOpen, setCoverDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState(playlist.name)
   const [description, setDescription] = useState(playlist.description || "")
@@ -48,7 +50,7 @@ export function EditPlaylistDialog({ playlist, onUpdate }: EditPlaylistDialogPro
           description: "Изменения успешно сохранены",
         })
         onUpdate(data.playlist)
-        setOpen(false)
+        onOpenChange(false)
       } else {
         const error = await response.json()
         throw new Error(error.error || "Ошибка при обновлении плейлиста")
@@ -64,24 +66,21 @@ export function EditPlaylistDialog({ playlist, onUpdate }: EditPlaylistDialogPro
     }
   }
 
-  const handleCoverUpload = (coverUrl: string) => {
-    onUpdate({
-      ...playlist,
-      cover_url: coverUrl,
-    })
+  const handleCoverUpload = async () => {
+    // После загрузки обложки рефетчим плейлист
+    try {
+      const response = await fetch(`/api/playlists/${playlist.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        onUpdate(data.playlist)
+      }
+    } catch (e) {
+      // ignore
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <motion.div whileTap={{ scale: 0.95 }}>
-          <Button variant="outline" size="sm" className="gap-2 active:scale-95 transition-transform">
-            <Edit className="w-4 h-4" />
-            <span className="hidden sm:inline">Редактировать</span>
-            <span className="sm:hidden">Ред.</span>
-          </Button>
-        </motion.div>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl font-semibold">
@@ -144,17 +143,49 @@ export function EditPlaylistDialog({ playlist, onUpdate }: EditPlaylistDialogPro
               <UploadCoverDialog
                 playlistId={playlist.id}
                 onUpload={handleCoverUpload}
+                coverUrl={playlist.cover_url}
+                open={coverDialogOpen}
+                onOpenChange={setCoverDialogOpen}
               />
-              <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+              <button
+                type="button"
+                className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-left underline hover:text-cyan-500 focus:outline-none"
+                onClick={() => setCoverDialogOpen(true)}
+                tabIndex={0}
+              >
                 Загрузите изображение для обложки плейлиста
-              </span>
+              </button>
             </div>
           </div>
+          {playlist.cover_url && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={async (e) => {
+                e.preventDefault();
+                try {
+                  await fetch(`/api/playlists/${playlist.id}/cover`, { method: 'DELETE' })
+                  const response = await fetch(`/api/playlists/${playlist.id}`)
+                  if (response.ok) {
+                    const data = await response.json()
+                    onUpdate(data.playlist)
+                  }
+                  setCoverDialogOpen(false)
+                } catch (e) {
+                  // Можно добавить обработку ошибки
+                }
+              }}
+              className="w-full sm:w-auto mt-2"
+              style={{ maxWidth: 200 }}
+            >
+              Удалить обложку
+            </Button>
+          )}
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-4 pt-4">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => onOpenChange(false)}
               disabled={loading}
               className="w-full sm:w-auto active:scale-95 transition-transform"
             >

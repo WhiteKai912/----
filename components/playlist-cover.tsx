@@ -22,6 +22,22 @@ export function PlaylistCover({ playlist, size = "md", className = "", onPress }
   // Если у плейлиста есть треки, подготовим первые 4 для сетки
   const coverTracks = playlist.tracks?.slice(0, 4) || []
 
+  let customCoverUrl: string | null | undefined = playlist.cover_url; // По умолчанию используем URL из БД
+
+  if (playlist.cover_data) {
+    let buffer: Buffer | null = null;
+    // Данные могут быть либо уже Buffer (на сервере), либо объектом {type: 'Buffer', data: [...]} (на клиенте)
+    if (Buffer.isBuffer(playlist.cover_data)) {
+      buffer = playlist.cover_data;
+    } else if (typeof playlist.cover_data === 'object' && (playlist.cover_data as any)?.type === 'Buffer' && Array.isArray((playlist.cover_data as any)?.data)) {
+      buffer = Buffer.from((playlist.cover_data as any).data);
+    }
+    
+    if (buffer) {
+      customCoverUrl = `data:image/webp;base64,${buffer.toString('base64')}?v=${playlist.cover_version}`;
+    }
+  }
+
   console.log('PlaylistCover props:', playlist);
 
   return (
@@ -31,11 +47,11 @@ export function PlaylistCover({ playlist, size = "md", className = "", onPress }
       onClick={onPress}
       className={`relative ${coverSize} ${className} rounded-lg overflow-hidden bg-gradient-to-br from-purple-500/20 to-pink-500/20`}
     >
-      {playlist.cover_url ? (
+      {customCoverUrl ? (
         // Если есть прямая ссылка на обложку — всегда показываем её
         <div className="absolute inset-0">
           <Image
-            src={playlist.cover_url}
+            src={customCoverUrl}
             alt={playlist.name}
             fill
             className="object-cover"
@@ -45,17 +61,12 @@ export function PlaylistCover({ playlist, size = "md", className = "", onPress }
         // Если cover_url нет, строим сетку из обложек треков
         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-0.5 bg-gray-900/50 p-0.5">
           {coverTracks.map((track, index) => (
-            <div key={track.id} className="relative w-full h-full overflow-hidden">
+            <div key={`${playlist.id}-${track.id}-${index}`} className="relative w-full h-full">
               {track.cover_url ? (
-                <Image
-                  src={track.cover_url}
-                  alt={track.title}
-                  fill
-                  className="object-cover"
-                />
+                <Image src={track.cover_url} alt={track.title} fill className="object-cover" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-purple-600/30 to-pink-600/30 flex items-center justify-center">
-                  <Music className="w-1/3 h-1/3 text-white/60" />
+                <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                  <Music className="w-1/2 h-1/2 text-gray-400" />
                 </div>
               )}
             </div>
@@ -63,7 +74,7 @@ export function PlaylistCover({ playlist, size = "md", className = "", onPress }
           {/* Заполняем оставшиеся ячейки, если треков меньше 4 */}
           {Array.from({ length: 4 - coverTracks.length }).map((_, index) => (
             <div
-              key={`empty-${index}`}
+              key={`empty-${playlist.id}-${index}`}
               className="w-full h-full bg-gradient-to-br from-purple-600/30 to-pink-600/30 flex items-center justify-center"
             >
               <Music className="w-1/3 h-1/3 text-white/60" />

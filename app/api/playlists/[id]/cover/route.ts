@@ -125,8 +125,13 @@ export async function POST(
     try {
       await client.query('BEGIN')
 
-      // Обновляем обложку плейлиста и добавляем версию
+      // Логируем параметры перед обновлением
+      console.log('Попытка обновления плейлиста:', params.id)
+      console.log('Тип файла:', file.type)
+      console.log('Размер файла:', buffer.length)
       const version = Date.now()
+      console.log('cover_version (timestamp):', version)
+
       const result = await client.query(
         `UPDATE playlists 
          SET cover_data = $1, 
@@ -138,8 +143,12 @@ export async function POST(
         [base64Image, file.type, version, params.id]
       )
 
+      // Логируем результат запроса
+      console.log('Результат UPDATE:', result.rows)
+
       if (result.rowCount === 0) {
         await client.query('ROLLBACK')
+        console.error('Плейлист не найден для обновления:', params.id)
         return NextResponse.json(
           { error: "Плейлист не найден" },
           { status: 404 }
@@ -150,13 +159,14 @@ export async function POST(
 
       // Возвращаем URL для доступа к обложке через API с версией
       const coverUrl = `/api/playlists/${params.id}/cover?v=${version}`
-      
+      console.log('coverUrl для ответа:', coverUrl)
       return NextResponse.json({ 
         cover_url: coverUrl,
         cover_version: version
       })
     } catch (error) {
       await client.query('ROLLBACK')
+      console.error('Ошибка при обновлении плейлиста:', error)
       throw error
     } finally {
       client.release()
@@ -165,6 +175,62 @@ export async function POST(
     console.error("Error uploading playlist cover:", error)
     return NextResponse.json(
       { error: "Ошибка при загрузке обложки плейлиста" },
+      { status: 500 }
+    )
+  }
+}
+
+// DELETE endpoint для удаления обложки плейлиста
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // Проверка авторизации
+    const session = await getServerSession(authOptions) as CustomSession | null
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Необходима авторизация" },
+        { status: 401 }
+      )
+    }
+
+    // Проверяем права на редактирование плейлиста
+    const playlist = await pool.query(
+      "SELECT user_id FROM playlists WHERE id = $1",
+      [params.id]
+    )
+
+    if (playlist.rowCount === 0) {
+      return NextResponse.json(
+        { error: "Плейлист не найден" },
+        { status: 404 }
+      )
+    }
+
+    if (playlist.rows[0].user_id !== session.user.id) {
+      return NextResponse.json(
+        { error: "Нет прав на редактирование плейлиста" },
+        { status: 403 }
+      )
+    }
+
+    // Удаляем обложку
+    await pool.query(
+      `UPDATE playlists 
+       SET cover_data = NULL, 
+           cover_type = NULL, 
+           cover_version = NULL, 
+           updated_at = NOW()
+       WHERE id = $1`,
+      [params.id]
+    )
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Error deleting playlist cover:", error)
+    return NextResponse.json(
+      { error: "Ошибка при удалении обложки плейлиста" },
       { status: 500 }
     )
   }

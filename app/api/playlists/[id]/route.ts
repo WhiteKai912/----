@@ -17,10 +17,11 @@ interface ExtendedSession {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const playlist = await getPlaylistById(params.id)
+    const { id } = await params
+    const playlist = await getPlaylistById(id)
     
     if (!playlist) {
       return NextResponse.json({ error: "Плейлист не найден" }, { status: 404 })
@@ -38,7 +39,7 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions) as ExtendedSession | null
@@ -49,7 +50,8 @@ export async function PATCH(
       )
     }
 
-    const playlist = await getPlaylistById(params.id)
+    const { id } = await params
+    const playlist = await getPlaylistById(id)
     if (!playlist) {
       return NextResponse.json(
         { error: "Плейлист не найден" },
@@ -65,7 +67,7 @@ export async function PATCH(
     }
 
     const data = await request.json()
-    const updatedPlaylist = await updatePlaylist(params.id, {
+    const updatedPlaylist = await updatePlaylist(id, {
       name: data.name,
       description: data.description,
       isPublic: data.isPublic,
@@ -83,7 +85,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions) as ExtendedSession | null
@@ -94,7 +96,8 @@ export async function DELETE(
       )
     }
 
-    const playlist = await getPlaylistById(params.id)
+    const { id } = await params
+    const playlist = await getPlaylistById(id)
     if (!playlist) {
       return NextResponse.json(
         { error: "Плейлист не найден" },
@@ -109,7 +112,7 @@ export async function DELETE(
       )
     }
 
-    await deletePlaylist(params.id)
+    await deletePlaylist(id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Error deleting playlist:", error)
