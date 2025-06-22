@@ -1,0 +1,1 @@
+ALTER TABLE tracks ADD COLUMN embed_url TEXT; 

@@ -1,0 +1,505 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+    --z-layer-base: 0;
+    --z-layer-player: 40;
+    --z-layer-navigation: 50;
+    --z-layer-modal: 100;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", sans-serif;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-100 dark:bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400 dark:bg-gray-500;
+}
+
+/* Smooth transitions */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Focus styles */
+.focus-visible:focus-visible {
+  @apply outline-none ring-2 ring-cyan-400 ring-offset-2 ring-offset-background;
+}
+
+/* Custom animations */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(34, 211, 238, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.8);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
+/* Music player specific styles */
+.music-card:hover .play-overlay {
+  opacity: 1;
+}
+
+.play-overlay {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.dark .loading-shimmer {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Music-themed gradients and effects */
+.gradient-primary {
+  background: linear-gradient(135deg, #00b3ff 0%, #a78bfa 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, #22d3ee 0%, #00b3ff 100%);
+}
+
+.gradient-dark {
+  background: linear-gradient(135deg, #1c2526 0%, #2d3748 100%);
+}
+
+.neon-glow {
+  box-shadow: 0 0 20px rgba(0, 179, 255, 0.3), 0 0 40px rgba(0, 179, 255, 0.1);
+}
+
+.neon-text {
+  text-shadow: 0 0 10px rgba(0, 179, 255, 0.5);
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-effect {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Music visualizer bars */
+.music-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+  padding: 2px;
+}
+
+.music-bar {
+  width: 2px;
+  height: 100%;
+  background: #fff;
+  animation: music-bar-animation 1s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+.music-bar:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.music-bar:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.music-bar:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.music-bar:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.music-bar:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+@keyframes music-bar-animation {
+  0%, 100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Floating elements */
+.floating {
+  animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Background animations */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+/* Pulse animation for logo */
+@keyframes logo-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.logo-pulse {
+  animation: logo-pulse 2s ease-in-out infinite;
+}
+
+/* Hover effects */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.dark .hover-lift:hover {
+  box-shadow: 0 10px 25px rgba(0, 179, 255, 0.2);
+}
+
+/* Мобильные стили */
+@media (max-width: 768px) {
+  .container {
+    @apply px-4 w-full;
+    max-width: 100%;
+  }
+
+  .main-content {
+    @apply px-2 py-4;
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+    min-height: calc(100vh - env(safe-area-inset-bottom));
+    touch-action: pan-x pan-y;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mobile-player {
+    @apply fixed bottom-0 left-0 right-0;
+    @apply bg-background/95 backdrop-blur-lg;
+    @apply border-t border-border;
+    @apply p-3;
+    @apply z-layer-player;
+  }
+
+  .mobile-menu {
+    @apply fixed bottom-0 left-0 right-0;
+    @apply bg-background/95 backdrop-blur-lg;
+    @apply border-t border-border;
+    @apply flex items-center justify-around;
+    @apply py-2 px-4;
+    @apply z-layer-player;
+  }
+
+  .mobile-nav {
+    @apply flex items-center justify-between;
+    @apply w-full max-w-md mx-auto;
+    @apply py-1;
+  }
+
+  .mobile-nav-item {
+    @apply flex flex-col items-center;
+    @apply px-3 py-1;
+    @apply text-sm text-muted-foreground;
+    @apply transition-colors duration-200;
+  }
+
+  .mobile-nav-item.active {
+    @apply text-primary;
+  }
+
+  .mobile-card {
+    @apply rounded-lg border border-border;
+    @apply bg-card/50 backdrop-blur-sm;
+    @apply p-4;
+    @apply w-full;
+    @apply transition-all duration-200;
+  }
+
+  .mobile-grid {
+    @apply grid grid-cols-2 gap-3;
+    @apply sm:grid-cols-2 md:grid-cols-3;
+  }
+
+  .mobile-image {
+    @apply aspect-square w-full;
+    @apply object-cover;
+    @apply rounded-md;
+  }
+
+  .mobile-heading {
+    @apply text-xl font-semibold;
+    @apply mb-4;
+    @apply truncate;
+  }
+
+  /* Отключение зума при двойном нажатии */
+  * {
+    touch-action: manipulation;
+  }
+
+  .mobile-truncate {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Дополнительные медиа-запросы для очень маленьких экранов */
+@media (max-width: 380px) {
+  .mobile-grid {
+    @apply grid-cols-1 gap-2;
+  }
+
+  .mobile-card {
+    @apply p-3;
+  }
+
+  .mobile-heading {
+    @apply text-lg;
+  }
+}
+
+/* Улучшенная поддержка жестов для мобильных устройств */
+@media (hover: none) and (pointer: coarse) {
+  .hover-lift {
+    @apply active:transform active:translate-y-0.5;
+  }
+
+  .mobile-button {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Дополнительные стили для мобильных устройств */
+  .no-tap-highlight {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Z-index layers */
+.z-layer-base {
+  z-index: var(--z-layer-base);
+}
+
+.z-layer-dropdown { z-index: 50; }
+.z-layer-modal { z-index: var(--z-layer-modal); }
+.z-layer-player {
+  z-index: var(--z-layer-player);
+}
+.z-layer-toast { z-index: 80; }
+
+/* Player specific styles */
+.player-fixed {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 70;
+}
+
+.player-sheet {
+  z-index: 80;
+}
+
+/* Main content padding to prevent overlap with fixed player */
+.main-content {
+  @apply px-2 py-4;
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  min-height: calc(100vh - env(safe-area-inset-bottom));
+}
+
+.z-layer-navigation {
+  z-index: var(--z-layer-navigation);
+}
+
+/* Улучшенная обрезка текста */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+.zero-with-logo {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zero-outline {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 8px solid #5ad0ff;
+  box-sizing: border-box;
+  z-index: 1;
+  background: transparent;
+}
+
+.logo-anim {
+  position: relative;
+  z-index: 2;
+  animation: floatY 2s ease-in-out infinite;
+  background: linear-gradient(135deg, #36c6f0 40%, #a259e6 100%);
+  border-radius: 50%;
+  padding: 12px;
+  box-shadow: 0 0 24px #5ad0ff55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes floatY {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-18px); }
+  100% { transform: translateY(0); }
+}
