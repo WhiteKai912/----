@@ -63,6 +63,8 @@ export default function AdminTracks({ onError, onSuccess }: AdminTracksProps) {
   const [uploadingCover, setUploadingCover] = useState(false)
   const [uploadingAudio, setUploadingAudio] = useState(false)
   const [showUploadModal, setShowUploadModal] = useState(false)
+  const [coverRefreshKey, setCoverRefreshKey] = useState(0)
+  const [coverError, setCoverError] = useState<string>("")
 
   useEffect(() => {
     fetchGenres()
@@ -217,8 +219,6 @@ export default function AdminTracks({ onError, onSuccess }: AdminTracksProps) {
           cover_url: data.cover_url,
           cover_version: data.cover_version
         })
-        
-        // Обновляем трек в списке
         setTracks(tracks.map(track => 
           track.id === editTrackData.id 
             ? {
@@ -228,7 +228,8 @@ export default function AdminTracks({ onError, onSuccess }: AdminTracksProps) {
               }
             : track
         ))
-        
+        setCoverRefreshKey(Date.now())
+        await fetchTracks()
         onSuccess("Обложка успешно обновлена")
       } else {
         onError("Ошибка при загрузке обложки")
@@ -318,107 +319,142 @@ export default function AdminTracks({ onError, onSuccess }: AdminTracksProps) {
               <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
             </div>
           ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Трек
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Статистика
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Статус
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Действия
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {tracks.map((track, index) => (
-                  <tr
-                    key={track.id}
-                    className={`
-                      border-b border-gray-100 dark:border-gray-800 
-                      hover:bg-gray-50 dark:hover:bg-gray-800/50
-                      ${index % 2 === 0 ? 'bg-white dark:bg-transparent' : 'bg-gray-50/50 dark:bg-gray-800/20'}
-                    `}
-                  >
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {track.title}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {track.artist_name} {track.album_title && `• ${track.album_title}`}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                          <PlayCircle className="w-4 h-4" />
-                          {track.plays_count}
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                          <Download className="w-4 h-4" />
-                          {track.downloads_count}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        className={
-                          track.is_active
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        }
-                      >
-                        {track.is_active ? "Активен" : "Скрыт"}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant={track.is_active ? "destructive" : "default"}
-                          size="sm"
-                          onClick={() => toggleTrackStatus(track.id, !track.is_active)}
-                        >
-                          {track.is_active ? (
-                            <>
-                              <Ban className="w-4 h-4 mr-2" />
-                              Скрыть
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              Показать
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteTrack(track.id)}
-                          className="text-red-500 hover:text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditTrack(track.id)}
-                          className="text-blue-500 hover:text-blue-600"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
+            <>
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">
+                      Трек
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">
+                      Статистика
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">
+                      Статус
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">
+                      Действия
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {tracks.map((track, index) => (
+                    <tr
+                      key={track.id}
+                      className={`
+                        border-b border-gray-100 dark:border-gray-800 
+                        hover:bg-gray-50 dark:hover:bg-gray-800/50
+                        ${index % 2 === 0 ? 'bg-white dark:bg-transparent' : 'bg-gray-50/50 dark:bg-gray-800/20'}
+                      `}
+                    >
+                      <td className="px-4 py-3">
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {track.title}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {track.artist_name} {track.album_title && `• ${track.album_title}`}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                            <PlayCircle className="w-4 h-4" />
+                            {track.plays_count}
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                            <Download className="w-4 h-4" />
+                            {track.downloads_count}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          className={
+                            track.is_active
+                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                              : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                          }
+                        >
+                          {track.is_active ? "Активен" : "Скрыт"}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant={track.is_active ? "destructive" : "default"}
+                            size="sm"
+                            onClick={() => toggleTrackStatus(track.id, !track.is_active)}
+                          >
+                            {track.is_active ? (
+                              <>
+                                <Ban className="w-4 h-4 mr-2" />
+                                Скрыть
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Показать
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteTrack(track.id)}
+                            className="text-red-500 hover:text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditTrack(track.id)}
+                            className="text-blue-500 hover:text-blue-600"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {/* Пагинация */}
+              {totalTracks > 20 && (
+                <div className="flex justify-center items-center gap-2 mt-6">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(page - 1)}
+                    disabled={page === 1}
+                  >
+                    Назад
+                  </Button>
+                  {/* Номера страниц */}
+                  {Array.from({ length: Math.ceil(totalTracks / 20) }, (_, i) => i + 1).map((p) => (
+                    <Button
+                      key={p}
+                      variant={p === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setPage(p)}
+                      className={p === page ? "font-bold" : ""}
+                    >
+                      {p}
+                    </Button>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(page + 1)}
+                    disabled={page === Math.ceil(totalTracks / 20)}
+                  >
+                    Вперёд
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </CardContent>
@@ -488,7 +524,7 @@ export default function AdminTracks({ onError, onSuccess }: AdminTracksProps) {
                     <div className="flex items-start gap-4">
                       {editTrackData.cover_url ? (
                         <img 
-                          src={`/api/tracks/${editTrackData.id}/cover${editTrackData.cover_version ? `?v=${editTrackData.cover_version}` : ''}`}
+                          src={editTrackData.cover_url + (coverRefreshKey ? `?t=${coverRefreshKey}` : '')}
                           alt="Cover" 
                           className="w-32 h-32 object-cover rounded-lg"
                           onError={(e) => {
@@ -504,18 +540,23 @@ export default function AdminTracks({ onError, onSuccess }: AdminTracksProps) {
                       <div className="flex-1 space-y-2">
                         <Input
                           type="file"
-                          accept="image/*"
+                          accept="image/jpeg,image/png,image/webp"
                           onChange={(e) => {
                             const file = e.target.files?.[0]
-                            if (file) handleCoverUpload(file)
+                            if (file) {
+                              const allowedTypes = ["image/jpeg", "image/png", "image/webp"]
+                              if (!allowedTypes.includes(file.type)) {
+                                setCoverError("Поддерживаются только JPG, PNG или WEBP")
+                                return
+                              }
+                              setCoverError("")
+                              handleCoverUpload(file)
+                            }
                           }}
                           disabled={uploadingCover}
                         />
-                        {uploadingCover && (
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Загрузка...
-                          </div>
+                        {coverError && (
+                          <div className="text-sm text-red-500">{coverError}</div>
                         )}
                       </div>
                     </div>

@@ -197,7 +197,7 @@ export function MusicCatalog({ initialTracks = [] }: MusicCatalogProps) {
                 {/* Album Cover */}
                 <div className="relative mb-4">
                   <Image
-                    src={track.cover_url ? `/api/tracks/${track.id}/cover${track.cover_version ? `?v=${track.cover_version}` : ''}` : "/placeholder.svg?height=200&width=200"}
+                    src={track.cover_url || "/placeholder.svg?height=200&width=200"}
                     alt={`${track.album_title || track.title} cover`}
                     width={200}
                     height={200}
@@ -345,7 +345,7 @@ export function MusicCatalog({ initialTracks = [] }: MusicCatalogProps) {
                   {/* Cover */}
                   <div className="relative flex-shrink-0">
                     <Image
-                      src={track.cover_url ? `/api/tracks/${track.id}/cover${track.cover_version ? `?v=${track.cover_version}` : ''}` : "/placeholder.svg?height=56&width=56"}
+                      src={track.cover_url || "/placeholder.svg?height=56&width=56"}
                       alt={track.title}
                       width={56}
                       height={56}
